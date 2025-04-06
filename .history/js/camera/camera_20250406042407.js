@@ -110,95 +110,23 @@ export class CameraManager {
     async initialize() {
         if (this.isInitialized) return;
 
-        console.log('Initializing camera...');
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        let stream = null;
-        let currentFacingMode = this.config.facingMode || (isMobile ? 'user' : undefined); // Start with preferred or default
-
-        const attemptConstraints = async (constraintsTry) => {
-            try {
-                console.log('Attempting getUserMedia with constraints:', JSON.stringify(constraintsTry));
-                stream = await navigator.mediaDevices.getUserMedia(constraintsTry);
-                console.log('getUserMedia successful.');
-                // Store the successfully used facing mode if applicable
-                if (constraintsTry.video && constraintsTry.video.facingMode) {
-                    this.config.facingMode = constraintsTry.video.facingMode;
-                    localStorage.setItem('facingMode', this.config.facingMode); // Save preference
-                }
-                return stream; // Success
-            } catch (error) {
-                console.warn(`getUserMedia failed for constraints ${JSON.stringify(constraintsTry)}:`, error.name, error.message);
-                if (error.name === 'NotAllowedError') {
-                    console.error('Camera permission denied by user.');
-                    throw error; // Re-throw permission errors, cannot recover
-                }
-                if (error.name === 'NotReadableError') {
-                    console.error('Camera hardware/OS error.');
-                    throw error; // Re-throw hardware errors, cannot recover
-                }
-                // For NotFoundError, OverconstrainedError, etc., we can try alternatives
-                return null; // Indicate failure but allow retries
-            }
-        };
-
-        // --- Attempt 1: Preferred facing mode (if mobile) + Ideal Resolution ---
-        let constraints = {
-            video: {
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            }
-        };
-        if (isMobile && currentFacingMode) {
-            constraints.video.facingMode = currentFacingMode;
-        }
-        stream = await attemptConstraints(constraints);
-
-        // --- Attempt 2: Alternate facing mode (if mobile and Attempt 1 failed) ---
-        if (!stream && isMobile) {
-            const alternateFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            console.log(`Attempt 1 failed, trying alternate facingMode: ${alternateFacingMode}`);
-            constraints.video.facingMode = alternateFacingMode;
-            stream = await attemptConstraints(constraints);
-            if (stream) currentFacingMode = alternateFacingMode; // Update if successful
-        }
-
-        // --- Attempt 3: Preferred/Successful facing mode (if mobile) + No Resolution Constraints ---
-        if (!stream) {
-            console.log('Attempts with ideal resolution failed, trying without resolution constraints...');
-            constraints = { video: {} }; // Reset constraints
-             if (isMobile && currentFacingMode) {
-                 constraints.video.facingMode = currentFacingMode;
-             }
-            stream = await attemptConstraints(constraints);
-        }
-
-        // --- Attempt 4: Alternate facing mode (if mobile and Attempt 3 failed) + No Resolution Constraints ---
-         if (!stream && isMobile) {
-            const alternateFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            console.log(`Attempt 3 failed, trying alternate facingMode without resolution: ${alternateFacingMode}`);
-            constraints = { video: { facingMode: alternateFacingMode } };
-            stream = await attemptConstraints(constraints);
-         }
-
-        // --- Final Check ---
-        if (!stream) {
-            console.error('Failed to initialize camera after multiple attempts.');
-            // Gracefully disable UI elements
-            const cameraBtn = document.querySelector('.camera-btn');
-            if (cameraBtn) {
-                cameraBtn.disabled = true;
-                cameraBtn.title = 'Camera not available or permission denied.';
-                cameraBtn.classList.remove('active');
-            }
-            // Potentially show a user-facing message here
-            // alert('Could not access the camera. Please check permissions and ensure no other app is using it.');
-            this.isInitialized = false; // Ensure state reflects failure
-            return; // Exit initialization
-        }
-
-        // --- Stream acquired, proceed with setup ---
-        this.stream = stream;
         try {
+            // Build constraints based on platform
+            const constraints = {
+                video: {
+                    width: { ideal: 1920 }, // Request max quality first
+                    height: { ideal: 1080 }
+                }
+            };
+
+            // Set initial facingMode on mobile
+            if (/Mobi|Android/i.test(navigator.userAgent)) {
+                this.config.facingMode = this.config.facingMode || 'user'; // Default to front camera
+                constraints.video.facingMode = this.config.facingMode;
+            }
+
+            // Request camera access
+            this.stream = await navigator.mediaDevices.getUserMedia(constraints);
 
             // Create and setup video element
             this.videoElement = document.createElement('video');
@@ -286,20 +214,8 @@ export class CameraManager {
             this.ctx = this.canvas.getContext('2d');
 
             this.isInitialized = true;
-            console.log('Camera initialized successfully.');
-        } catch (setupError) {
-            // Catch errors during element creation/setup phase
-            console.error('Error setting up camera preview elements:', setupError);
-            this.dispose(); // Clean up partially acquired resources
-            // Disable UI
-            const cameraBtn = document.querySelector('.camera-btn');
-            if (cameraBtn) {
-                cameraBtn.disabled = true;
-                cameraBtn.title = 'Error setting up camera preview.';
-                 cameraBtn.classList.remove('active');
-            }
-            this.isInitialized = false;
-            return;
+        } catch (error) {
+            throw new Error(`Failed to initialize camera: ${error.message}`);
         }
     }
 
@@ -342,48 +258,30 @@ export class CameraManager {
      * Stop camera stream and cleanup resources
      */
     dispose() {
-        console.log('Disposing camera resources...');
         if (this.stream) {
             this.stream.getTracks().forEach(track => track.stop());
             this.stream = null;
         }
-
-        // Remove event listener for saving position/size
-        // Note: This requires storing the listener function reference during initialization
-        // For simplicity here, we assume it's acceptable for the listener to remain if dispose is called unexpectedly.
-        // A more robust implementation would store and remove the listener.
-
-        if (this.previewContainer) {
-            // Remove elements added dynamically
-            const closeBtn = this.previewContainer.querySelector('.preview-close-btn');
-            if (closeBtn) closeBtn.remove();
-            if (this.switchButton) this.switchButton.remove();
-            if (this.videoElement) this.videoElement.remove();
-
-            // Hide and clear container
-            this.hidePreview();
-            // Ensure container is empty before potentially removing it or reusing it later
-            this.previewContainer.innerHTML = '';
-            // We might not want to nullify previewContainer if the element itself should persist in the DOM
-            // this.previewContainer = null; // Keep if the #cameraPreview element is static HTML
+        
+        if (this.videoElement) {
+            this.videoElement.srcObject = null;
+            this.videoElement = null;
         }
 
-        // Nullify references
-        this.videoElement = null;
-        this.switchButton = null;
+        if (this.switchButton) {
+            this.switchButton.remove();
+            this.switchButton = null;
+        }
+
+        if (this.previewContainer) {
+            this.hidePreview();
+            this.previewContainer.innerHTML = ''; // Clear the preview container
+            this.previewContainer = null;
+        }
+
         this.canvas = null;
         this.ctx = null;
         this.isInitialized = false;
         this.aspectRatio = null;
-        this.config.facingMode = localStorage.getItem('facingMode') || ( /Mobi|Android/i.test(navigator.userAgent) ? 'user' : undefined); // Reset facing mode preference
-
-        // Re-enable camera button if it was disabled due to error, allowing user to try again
-        const cameraBtn = document.querySelector('.camera-btn');
-        if (cameraBtn) {
-             cameraBtn.disabled = false;
-             cameraBtn.title = 'Toggle Camera'; // Reset title
-             cameraBtn.classList.remove('active'); // Ensure it's not stuck in active state
-        }
-         console.log('Camera disposed.');
     }
 }

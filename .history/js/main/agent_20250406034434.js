@@ -105,10 +105,7 @@ export class GeminiAgent extends EventEmitter {
                 }
 
             } catch (error) {
-                // Log the error but don't re-throw, to avoid blocking other event processing (like text)
-                console.error('Error processing incoming audio data:', error);
-                // Optionally, emit an error event for UI feedback
-                this.emit('audio_error', error);
+                throw new Error('Audio processing error:' + error);
             }
         });
 

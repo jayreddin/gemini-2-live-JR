@@ -94,7 +94,7 @@ class SettingsManager {
         // Touch events for mobile swipe
         this.dialog.addEventListener('touchstart', (e) => {
             this.touchStartX = e.touches[0].clientX;
-        }, { passive: true });
+        });
 
         this.dialog.addEventListener('touchend', (e) => {
             const touchEndX = e.changedTouches[0].clientX;
