@@ -38,30 +38,10 @@ export class GeminiWebsocketClient extends EventEmitter {
             return this.connectionPromise;
         }
 
-        // Retrieve API key from localStorage
-        const apiKey = localStorage.getItem('deepgramApiKey');
-        if (!apiKey) {
-            const errorMsg = 'No Deepgram API key provided';
-            console.error(errorMsg);
-            this.emit('error', errorMsg);
-            return Promise.reject(new Error(errorMsg));
-        }
-
-        // Append API key as query param
-        let wsUrl;
-        try {
-            wsUrl = new URL(this.url);
-            wsUrl.searchParams.set('key', apiKey);
-        } catch (e) {
-            console.error('Invalid WebSocket URL:', this.url, e);
-            this.emit('error', 'Invalid WebSocket URL');
-            return Promise.reject(e);
-        }
-
         console.info('🔗 Establishing WebSocket connection...');
         this.isConnecting = true;
         this.connectionPromise = new Promise((resolve, reject) => {
-            const ws = new WebSocket(wsUrl.toString());
+            const ws = new WebSocket(this.url);
 
             // Send setup message upon successful connection
             ws.addEventListener('open', () => {
@@ -79,9 +59,8 @@ export class GeminiWebsocketClient extends EventEmitter {
             ws.addEventListener('error', (error) => {
                 this.disconnect(ws);
                 const reason = error.reason || 'Unknown';
-                const message = `Could not connect to "${wsUrl.toString()}". Reason: ${reason}`;
+                const message = `Could not connect to "${this.url}. Reason: ${reason}"`;
                 console.error(message, error);
-                this.emit('error', message);
                 reject(error);
             });
 
@@ -98,27 +77,12 @@ export class GeminiWebsocketClient extends EventEmitter {
             ws.addEventListener('close', (event) => {
                 console.warn(`🔗 WebSocket connection closed. Code: ${event.code}, Reason: "${event.reason}", Clean: ${event.wasClean}`);
                 this.disconnect(ws); // Ensure state is cleaned up
-
-                // Detect authentication failure by close code or reason
-                const authFailure = (
-                    [4001, 4003, 1008].includes(event.code) ||
-                    (event.reason && /auth|token|key/i.test(event.reason))
-                );
-
-                if (authFailure) {
-                    const authMsg = `Authentication failed. Code: ${event.code}, Reason: ${event.reason}`;
-                    console.error(authMsg);
-                    this.emit('auth_failed', authMsg);
-                    this.emit('error', authMsg);
-                } else {
-                    // Optionally emit a 'disconnected' event for other parts of the app
-                    this.emit('disconnected', { code: event.code, reason: event.reason, wasClean: event.wasClean });
-                }
-
+                // Optionally emit a 'disconnected' event for other parts of the app
+                this.emit('disconnected', { code: event.code, reason: event.reason, wasClean: event.wasClean });
                 // Reject the connection promise if it's still pending during a close event
                 if (this.isConnecting) {
-                    this.isConnecting = false;
-                    reject(new Error(`WebSocket closed during connection attempt. Code: ${event.code}, Reason: ${event.reason}`));
+                     this.isConnecting = false;
+                     reject(new Error(`WebSocket closed during connection attempt. Code: ${event.code}, Reason: ${event.reason}`));
                 }
             });
         });
