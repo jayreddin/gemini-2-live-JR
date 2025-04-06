@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Live</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-dymI1+5z5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5l5k5k==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="header-left">
+                <button id="disconnectBtn" class="disconnect-btn icon-btn" aria-label="Disconnect"><span class="material-icons">power_settings_new</span></button>
+            </div>
+            <div class="header-right">
+                <button id="responseToggleBtn" class="response-toggle-btn icon-btn" aria-label="Toggle Text/Audio Mode"><span class="material-icons">sync_alt</span></button>
+                <button id="themeToggleBtn" class="theme-toggle-btn icon-btn" aria-label="Toggle Theme"><span class="material-icons">brightness_6</span></button>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <button id="cameraBtn" class="control-btn camera-btn" aria-label="Toggle Camera"><span class="material-icons">videocam</span></button>
+            <button id="screenBtn" class="control-btn screen-btn" aria-label="Toggle Screen Share"><span class="material-icons">desktop_windows</span></button>
+            <button id="micBtn" class="control-btn mic-btn" aria-label="Toggle Microphone"><span class="material-icons">mic</span></button>
+            <button id="settingsBtn" class="control-btn settings-btn" aria-label="Open Settings"><span class="material-icons">settings</span></button>
+        </div>
+        <div id="chatHistory" class="chat-history"></div>
+        <canvas id="visualizer" class="visualizer"></canvas>
+        <div id="cameraPreview" class="camera-preview"></div>
+        <div id="screenPreview" class="screen-preview"></div>
+        <div class="text-input-container">
+            <input type="text" id="messageInput" placeholder="Type your message..." class="text-input">
+            <button id="sendBtn" class="send-btn"><span class="material-icons">send</span></button>
+        </div>
+    </div>
+    <script type="module" src="js/script.js"></script>
+</body>
+</html>

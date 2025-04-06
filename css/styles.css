@@ -1,0 +1,898 @@
+/* Light theme variables */
+:root {
+    /* Common colors */
+    --accent-color: #4CAF50;
+    --danger-color: #ff4444;
+    --success-color: #4CAF50;
+    --warning-color: #ff9800;
+
+    /* Light theme defaults */
+    --bg-color: #f5f5f5;
+    --button-bg: #ffffff;
+    --button-hover: #e0e0e0;
+    --text-color: #333333;
+    --border-color: #dddddd;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme variables */
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --button-bg: #2d2d2d;
+    --button-hover: #3d3d3d;
+    --text-color: #ffffff;
+    --border-color: #404040;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px var(--shadow-color);
+    z-index: 100;
+}
+
+.header-left,
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header button {
+    margin-right: 0;
+    border: 1px solid var(--border-color);
+    background: var(--button-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Round icon buttons in header */
+.header .icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    padding: 0;
+}
+
+.header button:hover {
+    background: var(--button-hover);
+    transform: translateY(-1px);
+}
+
+/* Control row styles */
+.control-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 99;
+    position: absolute;
+    bottom: 70px; /* just above input container */
+    left: 0;
+    width: 100%;
+}
+
+.control-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--button-bg);
+    border: 2px solid var(--accent-color);
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    font-size: 18px;
+}
+
+.control-btn:hover {
+    background-color: var(--button-hover);
+    transform: scale(1.05);
+}
+
+.control-btn.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* Preview container styles */
+.preview-container {
+    position: absolute;
+    background: var(--button-bg);
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    cursor: move;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    transition: box-shadow 0.3s ease;
+    z-index: 10;
+}
+
+.preview-container:hover {
+    box-shadow: 0 6px 12px var(--shadow-color);
+}
+
+.preview-container .resize-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: var(--accent-color);
+    border-radius: 50%;
+}
+
+.preview-container .resize-handle.top-left { top: -5px; left: -5px; cursor: nw-resize; }
+.preview-container .resize-handle.top-right { top: -5px; right: -5px; cursor: ne-resize; }
+.preview-container .resize-handle.bottom-left { bottom: -5px; left: -5px; cursor: sw-resize; }
+.preview-container .resize-handle.bottom-right { bottom: -5px; right: -5px; cursor: se-resize; }
+
+.disconnect-btn {
+    background-color: var(--button-bg);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.disconnect-btn:hover {
+    background-color: var(--danger-color);
+    color: var(--text-color);
+}
+
+.connect-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    background-color: var(--button-bg);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.connect-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+}
+
+.mic-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: var(--button-bg);
+    border: 2px solid var(--accent-color);
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.camera-btn,
+.screen-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background-color: var(--button-bg);
+    border: 2px solid var(--accent-color);
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.camera-btn:hover,
+.screen-btn:hover {
+    background-color: var(--button-hover);
+    transform: scale(1.05);
+}
+
+.camera-btn.active,
+.screen-btn.active {
+    background-color: var(--accent-color);
+}
+
+/* Media query for small devices */
+@media screen and (max-width: 350px) {
+    .mic-btn {
+        bottom: 80px;
+    }
+    
+    .camera-btn {
+        bottom: 200px;
+    }
+    
+    .screen-btn {
+        bottom: 140px;
+    }
+}
+
+.mic-btn:hover {
+    background-color: var(--button-hover);
+    transform: scale(1.05);
+}
+
+.mic-btn.active {
+    background-color: var(--accent-color);
+}
+
+.mic-icon {
+    font-size: 16px;
+}
+
+.text-input-container {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 100px; /* Leave space for mic button */
+    display: flex;
+    gap: 10px;
+    z-index: 2;
+}
+
+.text-input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--accent-color);
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    font-size: 16px;
+    outline: none;
+}
+
+.text-input:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: var(--button-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.send-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--text-color);
+}
+
+.visualizer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 200px;
+    z-index: 1;
+}
+
+#cameraPreview, #screenPreview {
+    position: absolute;
+    background-color: var(--button-bg);
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    overflow: visible;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    min-width: 160px;
+    min-height: 120px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(10px);
+    pointer-events: none; /* Prevent interaction during animation */
+}
+
+#cameraPreview:hover, #screenPreview:hover {
+    box-shadow: 0 6px 12px var(--shadow-color);
+}
+
+#cameraPreview.active, #screenPreview.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto; /* Re-enable interaction when active */
+}
+
+@keyframes previewAppear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes previewDisappear {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
+.preview-appear {
+    animation: previewAppear 0.3s ease forwards;
+}
+
+.preview-disappear {
+    animation: previewDisappear 0.3s ease forwards;
+}
+
+.preview-close-btn {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    background: var(--danger-color);
+    border: 2px solid var(--button-bg);
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 1002;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.preview-close-btn:hover {
+    transform: scale(1.1);
+    background-color: #ff0000;
+}
+
+.preview-close-btn:active {
+    transform: scale(0.95);
+}
+
+@media (pointer: coarse) {
+    .preview-close-btn {
+        width: 32px;
+        height: 32px;
+        top: -16px;
+        right: -16px;
+        font-size: 18px;
+    }
+}
+
+#cameraPreview video, #screenPreview video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#screenPreview video {
+    object-fit: contain; /* Maintain aspect ratio without cropping */
+}
+
+/* Resize handles */
+.resize-handle {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    z-index: 1001;
+    touch-action: none;
+}
+
+/* Visible part of the handle */
+.resize-handle::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.resize-handle:hover::after {
+    transform: translate(-50%, -50%) scale(1.2);
+    background-color: var(--accent-color);
+}
+
+/* Active state for touch */
+.resize-handle:active::after {
+    transform: translate(-50%, -50%) scale(1.3);
+    background-color: var(--accent-color);
+}
+
+.resize-handle.top-left { top: -12px; left: -12px; cursor: nw-resize; }
+.resize-handle.top-right { top: -12px; right: -12px; cursor: ne-resize; }
+.resize-handle.bottom-left { bottom: -12px; left: -12px; cursor: sw-resize; }
+.resize-handle.bottom-right { bottom: -12px; right: -12px; cursor: se-resize; }
+
+@media (pointer: coarse) {
+    .resize-handle {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .resize-handle::after {
+        width: 16px;
+        height: 16px;
+    }
+
+    .resize-handle.top-left { top: -16px; left: -16px; }
+    .resize-handle.top-right { top: -16px; right: -16px; }
+    .resize-handle.bottom-left { bottom: -16px; left: -16px; }
+    .resize-handle.bottom-right { bottom: -16px; right: -16px; }
+}
+
+/* Responsive preview container sizes */
+@media (max-width: 768px) {
+    #cameraPreview, #screenPreview {
+        max-width: 50vw;
+        max-height: 40vh;
+    }
+}
+
+@media (max-width: 480px) {
+    #cameraPreview, #screenPreview {
+        max-width: 70vw;
+        max-height: 30vh;
+    }
+}
+
+@media (max-width: 340px) {
+    #cameraPreview, #screenPreview {
+        max-width: 90vw;
+        max-height: 25vh;
+    }
+}
+
+/* Default preview positions for different screen sizes */
+@media (min-width: 769px) {
+    #cameraPreview {
+        top: 80px;
+        right: 20px;
+        width: 320px;
+        height: 240px;
+    }
+    #screenPreview {
+        top: 340px;
+        right: 20px;
+        width: 320px;
+        height: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Improved touch targets for mobile */
+    .control-btn,
+    .mic-btn,
+    .camera-btn,
+    .screen-btn {
+        width: 56px;
+        height: 56px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .settings-btn {
+        width: 48px;
+        height: 48px;
+        padding: 12px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Settings dialog improvements for mobile */
+    .settings-dialog {
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        transform: none;
+    }
+
+    .settings-tabs {
+        position: sticky;
+        top: 0;
+        background: var(--bg-color);
+        z-index: 1002;
+        padding: 15px 15px 0;
+    }
+
+    .settings-tab {
+        padding: 15px 25px;
+        font-size: 16px;
+    }
+
+    .settings-content {
+        padding: 20px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .settings-group input,
+    .settings-group select {
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 8px;
+    }
+
+    /* Improved touch feedback */
+    input[type="range"] {
+        height: 24px;
+        margin: 10px 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Preview positioning for mobile */
+    #cameraPreview {
+        top: 70px;
+        right: 10px;
+        width: 240px;
+        height: 180px;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+    }
+
+    #screenPreview {
+        top: 270px;
+        right: 10px;
+        width: 240px;
+        height: 135px;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+    }
+
+    /* Better touch feedback */
+    .control-btn:active,
+    .mic-btn:active,
+    .camera-btn:active,
+    .screen-btn:active,
+    .settings-btn:active {
+        transform: scale(0.95);
+        background-color: var(--button-hover);
+    }
+
+    /* Prevent text selection while dragging */
+    #cameraPreview,
+    #screenPreview {
+        user-select: none;
+        -webkit-user-select: none;
+    }
+
+    /* Smoother animations on mobile */
+    #cameraPreview,
+    #screenPreview,
+    .resize-handle {
+        will-change: transform;
+    }
+}
+
+.camera-switch-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    z-index: 1000;
+    transition: background-color 0.2s;
+}
+
+.camera-switch-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* Hide on desktop */
+@media (hover: hover) and (pointer: fine) {
+    .camera-switch-btn {
+        display: none;
+    }
+}
+
+.settings-btn {
+    padding: 10px;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.settings-btn:hover {
+    background-color: var(--button-hover);
+}
+
+/* Settings Dialog with Tabs */
+.settings-dialog {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--bg-color);
+    border: 1px solid var(--accent-color);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    z-index: 1001;
+}
+
+.settings-tabs {
+    display: flex;
+    overflow-x: auto;
+    background: var(--button-bg);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 12px 12px 0 0;
+    padding: 10px 10px 0;
+}
+
+.settings-tab {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    color: var(--text-color);
+    cursor: pointer;
+    white-space: nowrap;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.2s ease;
+}
+
+.settings-tab:hover {
+    background: var(--button-hover);
+}
+
+.settings-tab.active {
+    background: var(--accent-color);
+    color: white;
+}
+
+.settings-content {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(80vh - 60px); /* 60px is approx tab height */
+}
+
+.settings-panel {
+    display: none;
+}
+
+.settings-panel.active {
+    display: block;
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    box-shadow: 0 4px 6px var(--shadow-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.toast.success { border-color: var(--success-color); }
+.toast.error { border-color: var(--danger-color); }
+.toast.warning { border-color: var(--warning-color); }
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.settings-dialog.active {
+    display: block;
+}
+
+.settings-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.settings-overlay.active {
+    display: block;
+}
+
+.settings-group {
+    margin-bottom: 20px;
+}
+
+.settings-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
+
+.settings-group select,
+.settings-group input {
+    width: 100%;
+    padding: 8px;
+    background-color: var(--button-bg);
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    color: var(--text-color);
+}
+
+.collapsible {
+    background-color: var(--button-bg);
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.collapsible-content {
+    display: none;
+    padding: 10px;
+}
+
+.collapsible-content.active {
+    display: block;
+}
+
+.settings-save-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--accent-color);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+}
+
+.settings-save-btn:hover {
+    opacity: 0.9;
+}
+
+.chat-history {
+    position: absolute;
+    top: 60px;
+    left: 20px;
+    right: 20px;
+    bottom: 120px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1;
+}
+
+.chat-message {
+    padding: 10px 15px;
+    border-radius: 15px;
+    max-width: 80%;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.user-message {
+    background: #2c5282;
+    color: white;
+    align-self: flex-end;
+    margin-left: 20%;
+}
+
+.model-message {
+    background: #2d3748;
+    color: white;
+    align-self: flex-start;
+    margin-right: 20%;
+}
+
+.model-message.streaming::after {
+    content: '▋';
+    display: inline-block;
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}

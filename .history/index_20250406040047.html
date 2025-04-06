@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Live</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <button id="disconnectBtn" class="disconnect-btn" aria-label="Disconnect">Disconnect</button>
+            <button id="connectBtn" class="connect-btn" style="display: none;" aria-label="Connect">Connect</button>
+            <button id="responseToggleBtn" class="response-toggle-btn" aria-label="Toggle Response Mode">
+                <span class="response-mode-icon">💬/🔊</span>
+            </button>
+            <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle Theme">
+                <span class="theme-icon">🌓</span>
+            </button>
+        </div>
+
+        <div class="control-row">
+            <button id="cameraBtn" class="control-btn camera-btn" aria-label="Toggle Camera">
+                <span class="camera-icon">📷</span>
+            </button>
+            <button id="screenBtn" class="control-btn screen-btn" aria-label="Toggle Screen Share">
+                <span class="screen-icon">🖥️</span>
+            </button>
+            <button id="micBtn" class="control-btn mic-btn" aria-label="Toggle Microphone">
+                <span class="mic-icon">🎤</span>
+            </button>
+            <button id="settingsBtn" class="control-btn settings-btn" aria-label="Open Settings">
+                <span class="settings-icon">⚙️</span>
+            </button>
+        </div>
+        <div id="chatHistory" class="chat-history"></div>
+        <canvas id="visualizer" class="visualizer"></canvas>
+        <div id="cameraPreview" class="camera-preview"></div>
+        <div id="screenPreview" class="screen-preview"></div>
+        <div class="text-input-container">
+            <input type="text" id="messageInput" placeholder="Type your message..." class="text-input">
+            <button id="sendBtn" class="send-btn">➤</button>
+        </div>
+    </div>
+    <script type="module" src="js/script.js"></script>
+</body>
+</html>
