@@ -1,13 +1,6 @@
 export const getWebsocketUrl = () => {
-    let apiKey = null;
-    try {
-        apiKey = localStorage.getItem('apiKey');
-        console.log('[DEBUG] localStorage apiKey:', apiKey);
-    } catch (e) {
-        console.error('[DEBUG] Error accessing localStorage for apiKey:', e);
-    }
+    const apiKey = localStorage.getItem('apiKey');
     if (!apiKey) {
-        console.error('[DEBUG] API key missing or localStorage unavailable');
         throw new Error('API key is required. Please set it in localStorage with key "apiKey"');
     }
     return `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`;

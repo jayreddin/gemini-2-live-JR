@@ -30,8 +30,6 @@ export class AudioRecorder extends EventTarget {
     async start(onAudioData) {
         this.onAudioData = onAudioData;
         try {
-            console.log('[DEBUG] AudioRecorder.start() called');
-
             // Request microphone access with specific echo cancelation and noise reduction
             this.stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -42,38 +40,17 @@ export class AudioRecorder extends EventTarget {
                     autoGainControl: true
                 }
             }).catch((error) => {
-                console.error('[DEBUG] Error accessing microphone:', error);
+                console.error('Error accessing microphone:', error);
                 throw new Error('Error accessing microphone:' + error);
             });
-            console.log('[DEBUG] getUserMedia succeeded');
-
+            
             // Initialize Web Audio API context and nodes
             this.audioContext = new AudioContext({ sampleRate: this.sampleRate });
             this.source = this.audioContext.createMediaStreamSource(this.stream);
-            console.log('[DEBUG] AudioContext and source created');
 
-            // Check AudioWorklet support
-            if (!this.audioContext.audioWorklet) {
-                console.error('[DEBUG] AudioWorklet is not supported in this browser');
-            } else {
-                console.log('[DEBUG] AudioWorklet is supported');
-            }
-
-            try {
-                await this.audioContext.audioWorklet.addModule('js/audio/worklets/audio-processor.js');
-                console.log('[DEBUG] AudioWorklet module loaded');
-            } catch (e) {
-                console.error('[DEBUG] Failed to load AudioWorklet module:', e);
-                throw e;
-            }
-
-            try {
-                this.processor = new AudioWorkletNode(this.audioContext, 'audio-recorder-worklet');
-                console.log('[DEBUG] AudioWorkletNode created');
-            } catch (e) {
-                console.error('[DEBUG] Failed to create AudioWorkletNode:', e);
-                throw e;
-            }
+            // Load and initialize audio processing worklet
+            await this.audioContext.audioWorklet.addModule('js/audio/worklets/audio-processor.js');
+            this.processor = new AudioWorkletNode(this.audioContext, 'audio-recorder-worklet');
             
             // Handle processed audio chunks from worklet
             this.processor.port.onmessage = (event) => {
@@ -89,9 +66,7 @@ export class AudioRecorder extends EventTarget {
             this.source.connect(this.processor);
             this.processor.connect(this.audioContext.destination);
             this.isRecording = true;
-            console.log('[DEBUG] Audio pipeline connected, recording started');
         } catch (error) {
-            console.error('[DEBUG] Failed to start audio recording:', error);
             throw new Error('Failed to start audio recording:' + error);
         }
     }
