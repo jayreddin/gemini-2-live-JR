@@ -59,7 +59,7 @@ export class CameraManager {
      */
     _createSwitchButton() {
         // Only create button on mobile devices
-        if (!/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
+        if (!/Mobi|Android/i.test(navigator.userAgent)) return;
 
         this.switchButton = document.createElement('button');
         this.switchButton.className = 'camera-switch-btn';
@@ -111,7 +111,7 @@ export class CameraManager {
         if (this.isInitialized) return;
 
         console.log('Initializing camera...');
-        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
         let stream = null;
         let currentFacingMode = this.config.facingMode || (isMobile ? 'user' : undefined); // Start with preferred or default
 
@@ -375,7 +375,7 @@ export class CameraManager {
         this.ctx = null;
         this.isInitialized = false;
         this.aspectRatio = null;
-        this.config.facingMode = localStorage.getItem('facingMode') || ( /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'user' : undefined); // Reset facing mode preference
+        this.config.facingMode = localStorage.getItem('facingMode') || ( /Mobi|Android/i.test(navigator.userAgent) ? 'user' : undefined); // Reset facing mode preference
 
         // Re-enable camera button if it was disabled due to error, allowing user to try again
         const cameraBtn = document.querySelector('.camera-btn');

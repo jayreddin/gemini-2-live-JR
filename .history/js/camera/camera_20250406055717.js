@@ -375,7 +375,7 @@ export class CameraManager {
         this.ctx = null;
         this.isInitialized = false;
         this.aspectRatio = null;
-        this.config.facingMode = localStorage.getItem('facingMode') || ( /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'user' : undefined); // Reset facing mode preference
+        this.config.facingMode = localStorage.getItem('facingMode') || ( /Mobi|Android/i.test(navigator.userAgent) ? 'user' : undefined); // Reset facing mode preference
 
         // Re-enable camera button if it was disabled due to error, allowing user to try again
         const cameraBtn = document.querySelector('.camera-btn');

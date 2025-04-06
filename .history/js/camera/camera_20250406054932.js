@@ -34,6 +34,8 @@ export class CameraManager {
         if (this.previewContainer) {
             this.previewContainer.classList.remove('preview-disappear');
             this.previewContainer.classList.add('active', 'preview-appear');
+            this.previewContainer.style.visibility = 'visible'; // Ensure visibility in Safari
+            this.previewContainer.style.opacity = '1'; // Ensure opacity in Safari
         }
     }
 
@@ -48,6 +50,9 @@ export class CameraManager {
             setTimeout(() => {
                 if (this.previewContainer) {
                     this.previewContainer.classList.remove('preview-disappear');
+                    // Explicit Safari visibility handling
+                    this.previewContainer.style.visibility = 'hidden';
+                    this.previewContainer.style.opacity = '0';
                 }
             }, 300); // Match animation duration
         }
@@ -58,7 +63,7 @@ export class CameraManager {
      * @private
      */
     _createSwitchButton() {
-        // Only create button on mobile devices
+        // Create button on all mobile devices and iOS specifically
         if (!/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) return;
 
         this.switchButton = document.createElement('button');
@@ -83,19 +88,37 @@ export class CameraManager {
             this.stream.getTracks().forEach(track => track.stop());
         }
 
-        // Reinitialize with new facingMode
+        // Reinitialize with new facingMode - attempt with multiple constraint options
         try {
+            // First try with exact constraint (works best on most browsers)
             const constraints = {
                 video: {
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
+                    width: { ideal: 1280 }, // Reduced from 1920 for better compatibility
+                    height: { ideal: 720 }, // Reduced from 1080 for better compatibility
                     facingMode: this.config.facingMode
                 }
             };
 
-            this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-            this.videoElement.srcObject = this.stream;
-            await this.videoElement.play();
+            // For iOS Safari, use exact constraint as a fallback
+            if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+                try {
+                    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                } catch (e) {
+                    console.log('Falling back to exact constraints for iOS Safari');
+                    constraints.video.facingMode = { exact: this.config.facingMode };
+                    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                }
+            } else {
+                this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+            }
+
+            if (this.videoElement) {
+                this.videoElement.srcObject = this.stream;
+                // iOS Safari requires these settings
+                this.videoElement.setAttribute('playsinline', true);
+                this.videoElement.setAttribute('webkit-playsinline', true);
+                await this.videoElement.play();
+            }
         } catch (error) {
             console.error('Failed to switch camera:', error);
             // Revert to previous facing mode on error
@@ -112,8 +135,31 @@ export class CameraManager {
 
         console.log('Initializing camera...');
         const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
         let stream = null;
-        let currentFacingMode = this.config.facingMode || (isMobile ? 'user' : undefined); // Start with preferred or default
+        let currentFacingMode = this.config.facingMode || (isMobile ? 'user' : undefined);
+
+        // Check if the browser supports getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            // Polyfill for older browsers
+            navigator.mediaDevices = {};
+            
+            navigator.mediaDevices.getUserMedia = function(constraints) {
+                // Get legacy API versions
+                const getUserMedia = navigator.getUserMedia || 
+                                    navigator.webkitGetUserMedia ||
+                                    navigator.mozGetUserMedia ||
+                                    navigator.msGetUserMedia;
+                
+                if (!getUserMedia) {
+                    return Promise.reject(new Error('getUserMedia is not implemented in this browser'));
+                }
+                
+                return new Promise((resolve, reject) => {
+                    getUserMedia.call(navigator, constraints, resolve, reject);
+                });
+            };
+        }
 
         const attemptConstraints = async (constraintsTry) => {
             try {
@@ -122,8 +168,12 @@ export class CameraManager {
                 console.log('getUserMedia successful.');
                 // Store the successfully used facing mode if applicable
                 if (constraintsTry.video && constraintsTry.video.facingMode) {
-                    this.config.facingMode = constraintsTry.video.facingMode;
-                    localStorage.setItem('facingMode', this.config.facingMode); // Save preference
+                    if (typeof constraintsTry.video.facingMode === 'object' && constraintsTry.video.facingMode.exact) {
+                        this.config.facingMode = constraintsTry.video.facingMode.exact;
+                    } else {
+                        this.config.facingMode = constraintsTry.video.facingMode;
+                    }
+                    localStorage.setItem('facingMode', this.config.facingMode);
                 }
                 return stream; // Success
             } catch (error) {
@@ -141,44 +191,48 @@ export class CameraManager {
             }
         };
 
-        // --- Attempt 1: Preferred facing mode (if mobile) + Ideal Resolution ---
+        // --- Attempt 1: Standard with reduced ideal resolution for better compatibility ---
         let constraints = {
             video: {
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
             }
         };
+        
         if (isMobile && currentFacingMode) {
             constraints.video.facingMode = currentFacingMode;
         }
+        
         stream = await attemptConstraints(constraints);
 
-        // --- Attempt 2: Alternate facing mode (if mobile and Attempt 1 failed) ---
+        // --- Attempt 2: For iOS Safari, try exact constraint ---
+        if (!stream && isIOS) {
+            console.log('Trying iOS Safari exact facingMode constraint');
+            constraints.video.facingMode = { exact: currentFacingMode };
+            stream = await attemptConstraints(constraints);
+        }
+
+        // --- Attempt 3: Alternate facing mode ---
         if (!stream && isMobile) {
             const alternateFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            console.log(`Attempt 1 failed, trying alternate facingMode: ${alternateFacingMode}`);
-            constraints.video.facingMode = alternateFacingMode;
+            console.log(`Trying alternate facingMode: ${alternateFacingMode}`);
+            
+            if (isIOS) {
+                constraints.video.facingMode = { exact: alternateFacingMode };
+            } else {
+                constraints.video.facingMode = alternateFacingMode;
+            }
+            
             stream = await attemptConstraints(constraints);
-            if (stream) currentFacingMode = alternateFacingMode; // Update if successful
+            if (stream) currentFacingMode = alternateFacingMode;
         }
 
-        // --- Attempt 3: Preferred/Successful facing mode (if mobile) + No Resolution Constraints ---
+        // --- Attempt 4: Minimal constraints ---
         if (!stream) {
-            console.log('Attempts with ideal resolution failed, trying without resolution constraints...');
-            constraints = { video: {} }; // Reset constraints
-             if (isMobile && currentFacingMode) {
-                 constraints.video.facingMode = currentFacingMode;
-             }
+            console.log('Trying minimal video constraints...');
+            constraints = { video: true };
             stream = await attemptConstraints(constraints);
         }
-
-        // --- Attempt 4: Alternate facing mode (if mobile and Attempt 3 failed) + No Resolution Constraints ---
-         if (!stream && isMobile) {
-            const alternateFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            console.log(`Attempt 3 failed, trying alternate facingMode without resolution: ${alternateFacingMode}`);
-            constraints = { video: { facingMode: alternateFacingMode } };
-            stream = await attemptConstraints(constraints);
-         }
 
         // --- Final Check ---
         if (!stream) {
@@ -190,20 +244,22 @@ export class CameraManager {
                 cameraBtn.title = 'Camera not available or permission denied.';
                 cameraBtn.classList.remove('active');
             }
-            // Potentially show a user-facing message here
-            // alert('Could not access the camera. Please check permissions and ensure no other app is using it.');
-            this.isInitialized = false; // Ensure state reflects failure
-            return; // Exit initialization
+            this.isInitialized = false;
+            return;
         }
 
         // --- Stream acquired, proceed with setup ---
         this.stream = stream;
         try {
-
             // Create and setup video element
             this.videoElement = document.createElement('video');
             this.videoElement.srcObject = this.stream;
-            this.videoElement.playsInline = true;
+            
+            // Important attributes for iOS Safari
+            this.videoElement.setAttribute('playsinline', true); 
+            this.videoElement.setAttribute('webkit-playsinline', true);
+            this.videoElement.setAttribute('muted', true);
+            this.videoElement.setAttribute('autoplay', true);
             
             // Add video to preview container
             const previewContainer = document.getElementById('cameraPreview');
@@ -239,7 +295,7 @@ export class CameraManager {
                 } else {
                     // Default position if none saved
                     previewContainer.style.right = '20px';
-                    previewContainer.style.bottom = '20px';
+                    previewContainer.style.top = '80px';
                 }
 
                 if (savedSize) {
@@ -268,25 +324,43 @@ export class CameraManager {
                 });
             }
             
-            await this.videoElement.play();
+            // Wait for play to ensure dimensions are available
+            try {
+                await this.videoElement.play();
+            } catch (playError) {
+                console.error("Error playing video:", playError);
+                // For iOS Safari, sometimes we need to try playing again after a timeout
+                if (isIOS) {
+                    setTimeout(async () => {
+                        try {
+                            await this.videoElement.play();
+                        } catch (e) {
+                            console.error("Retry play failed:", e);
+                        }
+                    }, 200);
+                }
+            }
 
-            // Get the actual video dimensions
-            const videoWidth = this.videoElement.videoWidth;
-            const videoHeight = this.videoElement.videoHeight;
-            this.aspectRatio = videoHeight / videoWidth;
+            // Wait a moment for the video to load its dimensions
+            setTimeout(() => {
+                // Get the actual video dimensions
+                const videoWidth = this.videoElement.videoWidth || 640;
+                const videoHeight = this.videoElement.videoHeight || 480;
+                this.aspectRatio = videoHeight / videoWidth;
 
-            // Calculate canvas size maintaining aspect ratio
-            const canvasWidth = this.config.width;
-            const canvasHeight = Math.round(this.config.width * this.aspectRatio);
+                // Calculate canvas size maintaining aspect ratio
+                const canvasWidth = this.config.width;
+                const canvasHeight = Math.round(this.config.width * this.aspectRatio);
 
-            // Create canvas for image processing
-            this.canvas = document.createElement('canvas');
-            this.canvas.width = canvasWidth;
-            this.canvas.height = canvasHeight;
-            this.ctx = this.canvas.getContext('2d');
+                // Create canvas for image processing
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = canvasWidth;
+                this.canvas.height = canvasHeight;
+                this.ctx = this.canvas.getContext('2d');
 
-            this.isInitialized = true;
-            console.log('Camera initialized successfully.');
+                this.isInitialized = true;
+                console.log('Camera initialized successfully.');
+            }, 500); // Give time for video dimensions to be available
         } catch (setupError) {
             // Catch errors during element creation/setup phase
             console.error('Error setting up camera preview elements:', setupError);
@@ -296,7 +370,7 @@ export class CameraManager {
             if (cameraBtn) {
                 cameraBtn.disabled = true;
                 cameraBtn.title = 'Error setting up camera preview.';
-                 cameraBtn.classList.remove('active');
+                cameraBtn.classList.remove('active');
             }
             this.isInitialized = false;
             return;
@@ -322,20 +396,26 @@ export class CameraManager {
      * @returns {Promise<string>} Base64 encoded JPEG image
      */
     async capture() {
-        if (!this.isInitialized) {
+        if (!this.isInitialized || !this.ctx || !this.canvas) {
             throw new Error('Camera not initialized. Call initialize() first.');
         }
 
-        // Draw current video frame to canvas, maintaining aspect ratio
-        this.ctx.drawImage(
-            this.videoElement,
-            0, 0,
-            this.canvas.width,
-            this.canvas.height
-        );
+        try {
+            // Draw current video frame to canvas, maintaining aspect ratio
+            this.ctx.drawImage(
+                this.videoElement,
+                0, 0,
+                this.canvas.width,
+                this.canvas.height
+            );
 
-        // Convert to base64 JPEG with specified quality
-        return this.canvas.toDataURL('image/jpeg', this.config.quality).split(',')[1];
+            // Convert to base64 JPEG with specified quality
+            return this.canvas.toDataURL('image/jpeg', this.config.quality).split(',')[1];
+        } catch (error) {
+            console.error("Error capturing image:", error);
+            // Return empty string or error indicator
+            return "";
+        }
     }
 
     /**
@@ -344,28 +424,36 @@ export class CameraManager {
     dispose() {
         console.log('Disposing camera resources...');
         if (this.stream) {
-            this.stream.getTracks().forEach(track => track.stop());
+            this.stream.getTracks().forEach(track => {
+                try {
+                    track.stop();
+                } catch (e) {
+                    console.warn("Error stopping track:", e);
+                }
+            });
             this.stream = null;
         }
-
-        // Remove event listener for saving position/size
-        // Note: This requires storing the listener function reference during initialization
-        // For simplicity here, we assume it's acceptable for the listener to remain if dispose is called unexpectedly.
-        // A more robust implementation would store and remove the listener.
 
         if (this.previewContainer) {
             // Remove elements added dynamically
             const closeBtn = this.previewContainer.querySelector('.preview-close-btn');
             if (closeBtn) closeBtn.remove();
             if (this.switchButton) this.switchButton.remove();
-            if (this.videoElement) this.videoElement.remove();
+            
+            if (this.videoElement) {
+                // Clean up video element
+                try {
+                    this.videoElement.pause();
+                    this.videoElement.srcObject = null;
+                } catch (e) {
+                    console.warn("Error cleaning up video element:", e);
+                }
+                this.videoElement.remove();
+            }
 
             // Hide and clear container
             this.hidePreview();
-            // Ensure container is empty before potentially removing it or reusing it later
             this.previewContainer.innerHTML = '';
-            // We might not want to nullify previewContainer if the element itself should persist in the DOM
-            // this.previewContainer = null; // Keep if the #cameraPreview element is static HTML
         }
 
         // Nullify references
@@ -375,15 +463,16 @@ export class CameraManager {
         this.ctx = null;
         this.isInitialized = false;
         this.aspectRatio = null;
-        this.config.facingMode = localStorage.getItem('facingMode') || ( /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'user' : undefined); // Reset facing mode preference
+        this.config.facingMode = localStorage.getItem('facingMode') || 
+            (/iPhone|iPad|iPod|Mobi|Android/i.test(navigator.userAgent) ? 'user' : undefined);
 
-        // Re-enable camera button if it was disabled due to error, allowing user to try again
+        // Re-enable camera button if it was disabled due to error
         const cameraBtn = document.querySelector('.camera-btn');
         if (cameraBtn) {
              cameraBtn.disabled = false;
-             cameraBtn.title = 'Toggle Camera'; // Reset title
-             cameraBtn.classList.remove('active'); // Ensure it's not stuck in active state
+             cameraBtn.title = 'Toggle Camera';
+             cameraBtn.classList.remove('active');
         }
-         console.log('Camera disposed.');
+        console.log('Camera disposed.');
     }
 }
